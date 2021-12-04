@@ -70,7 +70,7 @@ fn config_args() -> anyhow::Result<Args> {
     };
 
     // Get AoC session from cmd args or else from env
-    let aoc_session = opts.session.or(env::var("AOC_SESSION").ok());
+    let aoc_session = opts.session.or_else(|| env::var("AOC_SESSION").ok());
 
     Ok(Args {
         year: 2021,
