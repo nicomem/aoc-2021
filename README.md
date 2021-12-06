@@ -25,5 +25,9 @@ AOC_SESSION = ...
 ## Run the program
 
 ```bash
+# Run in debug mode (faster compilation)
 cargo run -- <DAY>
+
+# Run in release mode (faster execution)
+cargo run --release -- <DAY>
 ```

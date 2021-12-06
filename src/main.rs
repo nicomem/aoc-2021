@@ -3,6 +3,7 @@ use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
 use anyhow::Context;
@@ -39,10 +40,23 @@ fn main() -> anyhow::Result<()> {
     println!("~~~ Advent of Code {} ~~~", args.year);
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     println!("# Day {}", args.day);
-    println!("q1 = {}", day.q1(&data));
-    println!("q2 = {}", day.q2(&data));
+
+    let (r, dur) = timer(|| day.q1(&data));
+    println!("q1 = {} ({} ms)", r, dur.as_millis());
+
+    let (r, dur) = timer(|| day.q2(&data));
+    println!("q2 = {} ({} ms)", r, dur.as_millis());
 
     Ok(())
+}
+
+/// Time a function call
+fn timer<T>(f: impl FnOnce() -> T) -> (T, Duration) {
+    let start = Instant::now();
+    let r = f();
+    let end = Instant::now();
+
+    (r, end - start)
 }
 
 struct Args {
@@ -51,6 +65,7 @@ struct Args {
     data_path: PathBuf,
     aoc_session: Option<String>,
 }
+
 fn config_args() -> anyhow::Result<Args> {
     // Load the potential .env file
     if dotenv().is_err() {
