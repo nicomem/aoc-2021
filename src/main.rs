@@ -45,10 +45,14 @@ fn main() -> anyhow::Result<()> {
     println!("~~~ Advent of Code {} ~~~", args.year);
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
-    let today = Utc::today();
+    let now = Utc::now();
     for day in days {
-        if Utc.ymd(args.year as _, 12, day as _) > today {
-            println!("We are not on day {day} yet!");
+        // Build the release date of the wanted day
+        let release = Utc.ymd(args.year as _, 12, day as _).and_hms(5, 0, 0);
+
+        // If the day challenge has not been released, directly exit without trying to download/run it
+        if release > now {
+            println!("Day {day} challenge has not been released yet!");
             exit(0);
         }
         println!("# Day {}", day);
