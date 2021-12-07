@@ -3,10 +3,12 @@ use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
+    process::exit,
     time::{Duration, Instant},
 };
 
 use anyhow::Context;
+use chrono::{TimeZone, Utc};
 use clap::Parser;
 use dotenv::dotenv;
 
@@ -15,8 +17,8 @@ mod utils;
 
 #[derive(Parser)]
 struct Opts {
-    /// The day to run
-    day: u8,
+    /// The day to run. If not specified, run all days
+    day: Option<u8>,
 
     /// Directory containing the data files, or where they will be downloaded to.
     /// Overrides the `DATA_PATH` environment variable.
@@ -32,20 +34,35 @@ struct Opts {
 fn main() -> anyhow::Result<()> {
     let args = config_args()?;
 
-    let data = read_data(args.year, args.day, args.data_path, args.aoc_session)
-        .expect("Could not read the data file");
-    let day = days::DAYS[args.day as usize - 1];
+    // Run either one or all days
+    let days = if let Some(day) = args.day {
+        day..=day
+    } else {
+        1..=25
+    };
 
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     println!("~~~ Advent of Code {} ~~~", args.year);
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    println!("# Day {}", args.day);
 
-    let (r, dur) = timer(|| day.q1(&data));
-    println!("q1 = {} ({} ms)", r, dur.as_millis());
+    let today = Utc::today();
+    for day in days {
+        if Utc.ymd(args.year as _, 12, day as _) > today {
+            println!("We are not on day {day} yet!");
+            exit(0);
+        }
+        println!("# Day {}", day);
 
-    let (r, dur) = timer(|| day.q2(&data));
-    println!("q2 = {} ({} ms)", r, dur.as_millis());
+        let data = read_data(args.year, day, &args.data_path, args.aoc_session.as_deref())
+            .expect("Could not read the data file");
+        let solution = days::DAYS[day as usize - 1];
+
+        let (r, dur) = timer(|| solution.q1(&data));
+        println!("q1 = {} ({} ms)", r, dur.as_millis());
+
+        let (r, dur) = timer(|| solution.q2(&data));
+        println!("q2 = {} ({} ms)", r, dur.as_millis());
+    }
 
     Ok(())
 }
@@ -61,7 +78,7 @@ fn timer<T>(f: impl FnOnce() -> T) -> (T, Duration) {
 
 struct Args {
     year: u16,
-    day: u8,
+    day: Option<u8>,
     data_path: PathBuf,
     aoc_session: Option<String>,
 }
@@ -101,7 +118,7 @@ fn read_data(
     year: u16,
     day: u8,
     data_path: impl AsRef<Path>,
-    aoc_session: Option<String>,
+    aoc_session: Option<&str>,
 ) -> anyhow::Result<String> {
     const COMPRESSION: i32 = 21;
     let path = data_path.as_ref().join(format!("day{}.zst", day));
@@ -145,7 +162,7 @@ fn read_data(
 }
 
 /// Download an input from the AOC servers for the user with the given session cookie
-fn download_input(year: u16, day: u8, aoc_session: String) -> anyhow::Result<String> {
+fn download_input(year: u16, day: u8, aoc_session: &str) -> anyhow::Result<String> {
     let url = utils::get_input_url(year, day);
     let body = ureq::get(&url)
         .set("Cookie", &format!("session={}", aoc_session))
