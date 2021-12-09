@@ -144,7 +144,7 @@ impl Mapper {
             {
                 *cell = count;
             }
-            arr.sort();
+            arr.sort_unstable();
 
             // And ask the map the corresponding number
             self.map[&arr]
