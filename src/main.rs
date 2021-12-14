@@ -3,7 +3,6 @@ use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
-    process::exit,
     time::{Duration, Instant},
 };
 
@@ -11,6 +10,8 @@ use anyhow::Context;
 use chrono::{TimeZone, Utc};
 use clap::Parser;
 use dotenv::dotenv;
+use owo_colors::colors::*;
+use owo_colors::OwoColorize;
 
 mod days;
 mod utils;
@@ -41,32 +42,68 @@ fn main() -> anyhow::Result<()> {
         1..=25
     };
 
-    println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    println!("~~~ Advent of Code {} ~~~", args.year);
-    println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    println!("{}", "~~~~~~~~~~~~~~~~~~~~~~~~~~~".fg::<Blue>());
+    println!(
+        "{} {} {} {}",
+        "~~~".fg::<Blue>(),
+        "Advent of Code".fg::<Cyan>(),
+        args.year.fg::<Green>(),
+        "~~~".fg::<Blue>()
+    );
+    println!("{}", "~~~~~~~~~~~~~~~~~~~~~~~~~~~".fg::<Blue>());
 
     let now = Utc::now();
+    let mut total_duration = Duration::ZERO;
     for day in days {
+        println!();
+
         // Build the release date of the wanted day
         let release = Utc.ymd(args.year as _, 12, day as _).and_hms(5, 0, 0);
 
         // If the day challenge has not been released, directly exit without trying to download/run it
         if release > now {
-            println!("Day {day} challenge has not been released yet!");
-            exit(0);
+            println!(
+                "{} {} {}",
+                "Day".fg::<Red>(),
+                day.fg::<Yellow>(),
+                "challenge has not been released yet!".fg::<Red>()
+            );
+            break;
         }
-        println!("# Day {}", day);
+        println!("{} {}", "# Day".fg::<Blue>(), day.fg::<Green>());
 
         let data = read_data(args.year, day, &args.data_path, args.aoc_session.as_deref())
             .expect("Could not read the data file");
         let solution = days::DAYS[day as usize - 1];
 
+        let print_result = |res: &str, dur: Duration| {
+            println!(
+                "{} {} {}{}{}{}",
+                "q1 =".fg::<Cyan>(),
+                res.fg::<Yellow>(),
+                "(".fg::<Blue>(),
+                dur.as_millis().fg::<Green>(),
+                " ms".fg::<Green>(),
+                ")".fg::<Blue>(),
+            );
+        };
+
         let (r, dur) = timer(|| solution.q1(&data));
-        println!("q1 = {} ({} ms)", r, dur.as_millis());
+        print_result(&r, dur);
+        total_duration += dur;
 
         let (r, dur) = timer(|| solution.q2(&data));
-        println!("q2 = {} ({} ms)", r, dur.as_millis());
+        print_result(&r, dur);
+        total_duration += dur;
     }
+
+    println!(
+        "\n{} {} {}{}",
+        "==>".fg::<Blue>(),
+        "Total duration:".fg::<Cyan>(),
+        total_duration.as_millis().fg::<Green>(),
+        "ms".fg::<Green>()
+    );
 
     Ok(())
 }
