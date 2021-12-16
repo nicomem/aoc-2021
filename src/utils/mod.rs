@@ -1,4 +1,7 @@
-use std::mem::MaybeUninit;
+use std::{
+    mem::MaybeUninit,
+    ops::{BitOr, Shl},
+};
 
 use itertools::{EitherOrBoth, Itertools};
 
@@ -45,3 +48,21 @@ pub trait TryCollectArray {
 }
 
 impl<I: Iterator + Sized> TryCollectArray for I {}
+
+/// Collect a number of bits into a integer.
+/// The last element in the iterator will be the LSB.
+/// Previous element will constitute the more significant bits in order.
+///
+/// If the iterator does not contain the number of bits required, return None.
+pub fn collect_n_bits<T>(bits: &mut dyn Iterator<Item = bool>, n: u8) -> Option<T>
+where
+    bool: Into<T>,
+    T: Shl<u8, Output = T> + BitOr<T, Output = T> + Default,
+{
+    let mut r = T::default();
+    for _ in 0..n {
+        let b = bits.next()?;
+        r = (r << 1) | b.into();
+    }
+    Some(r)
+}
