@@ -88,13 +88,25 @@ fn main() -> anyhow::Result<()> {
             );
         };
 
+        let print_todo = || {
+            println!("{} {}", "q1 =".fg::<Cyan>(), "TODO".fg::<Red>(),);
+        };
+
         let (r, dur) = timer(|| solution.q1(&data));
-        print_result(&r, dur);
-        total_duration += dur;
+        if r.is_empty() {
+            print_todo();
+        } else {
+            print_result(&r, dur);
+            total_duration += dur;
+        }
 
         let (r, dur) = timer(|| solution.q2(&data));
-        print_result(&r, dur);
-        total_duration += dur;
+        if r.is_empty() {
+            print_todo();
+        } else {
+            print_result(&r, dur);
+            total_duration += dur;
+        }
     }
 
     println!(

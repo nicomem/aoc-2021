@@ -6,13 +6,13 @@ impl Solution for Day25 {
     /// TODO
     fn q1(&self, data: &str) -> String {
         let _lines = Self::parse_data(data);
-        todo!()
+        String::new()
     }
 
     /// TODO
     fn q2(&self, data: &str) -> String {
         let _lines = Self::parse_data(data);
-        todo!()
+        String::new()
     }
 }
 
