@@ -3,8 +3,8 @@ use seq_macro::seq;
 use crate::Solution;
 
 seq!(N in 1..=25 {
-    use self::day #N::Day #N;
-    mod day #N;
+    use self::day~N::Day~N;
+    mod day~N;
 });
 
 pub(crate) const DAYS: &[&dyn Solution] = &[

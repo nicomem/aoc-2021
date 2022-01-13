@@ -158,8 +158,7 @@ impl Solution for Day18 {
         let mut max_mag = 0;
         for i in 0..(pairs.len() - 1) {
             let a = &pairs[i];
-            for j in (i + 1)..pairs.len() {
-                let b = &pairs[j];
+            for b in pairs.iter().skip(i + 1) {
                 let mag1 = magnitude(&(a.clone() + b.clone()));
                 let mag2 = magnitude(&(b.clone() + a.clone()));
                 max_mag = max_mag.max(mag1).max(mag2);
