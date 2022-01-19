@@ -21,11 +21,22 @@ pub type YX = (usize, usize);
 pub struct CheckedYX(YX);
 
 impl CheckedYX {
-    pub fn new<T>(grid: &Grid<T>, pos: YX) -> Option<Self> {
-        if pos.0 < grid.width && pos.1 < grid.height {
-            Some(Self(pos))
+    /// Check that the coordinate is valid for the given grid.
+    pub fn new<T>(grid: &Grid<T>, (y, x): YX) -> Option<Self> {
+        if y < grid.height && x < grid.width {
+            Some(Self((y, x)))
         } else {
             None
+        }
+    }
+
+    /// Same as [`CheckedYX::new`], but can take signed coordinates.
+    /// As grid coordinates are not valid for negative values, will return None for any negative value.
+    pub fn new_signed<T>(grid: &Grid<T>, (y, x): (isize, isize)) -> Option<Self> {
+        if y < 0 || x < 0 {
+            None
+        } else {
+            Self::new(grid, (y as usize, x as usize))
         }
     }
 }
@@ -80,6 +91,56 @@ impl<T> Grid<T> {
         let height = self.height;
         let width = self.width;
         (0..height).flat_map(move |y| (0..width).map(move |x| CheckedYX((y, x))))
+    }
+
+    /// Parse a 2D string of characters into a grid.
+    pub fn from_str_map<'a>(
+        mut lines: impl Iterator<Item = &'a str>,
+        mut map_char: impl FnMut(char) -> T,
+    ) -> Self {
+        // Extract and process the first line to get the width
+        let mut data: Vec<_> = lines.next().unwrap().chars().map(&mut map_char).collect();
+        let width = data.len();
+
+        // Extract the rest of the grid and add it to the data vector
+        let chars = lines.flat_map(|line| line.chars()).map(map_char);
+        data.extend(chars);
+
+        let height = data.len() / width;
+        Grid {
+            data,
+            width,
+            height,
+        }
+    }
+
+    /// Create a new grid with different sizes than the current.
+    /// The data copy begins at the given coordinate and may be truncated if go out of bounds.
+    /// Vacant cells will be filled with the specified data element.
+    #[must_use]
+    pub fn resized(&self, height: usize, width: usize, at: YX, fill: T) -> Self
+    where
+        T: Clone,
+    {
+        // Create a new grid filled with the default element
+        let mut new_grid = Self {
+            data: vec![fill; height * width],
+            width,
+            height,
+        };
+
+        // Copy back the original grid data to the new one
+        let (y0, x0) = at;
+        for yd in 0..self.height {
+            for xd in 0..self.width {
+                if let Some(yx) = CheckedYX::new(&new_grid, (y0 + yd, x0 + xd)) {
+                    let v = self.get(CheckedYX::new(self, (yd, xd)).unwrap()).clone();
+                    *new_grid.get_mut(yx) = v;
+                }
+            }
+        }
+
+        new_grid
     }
 }
 
