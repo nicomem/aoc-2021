@@ -79,7 +79,7 @@ fn main() -> anyhow::Result<()> {
         let print_result = |res: &str, dur: Duration| {
             println!(
                 "{} {} {}{}{}{}",
-                "q1 =".fg::<Cyan>(),
+                "R =".fg::<Cyan>(),
                 res.fg::<Yellow>(),
                 "(".fg::<Blue>(),
                 dur.as_millis().fg::<Green>(),
@@ -89,7 +89,7 @@ fn main() -> anyhow::Result<()> {
         };
 
         let print_todo = || {
-            println!("{} {}", "q1 =".fg::<Cyan>(), "TODO".fg::<Red>(),);
+            println!("{} {}", "R =".fg::<Cyan>(), "TODO".fg::<Red>(),);
         };
 
         let (r, dur) = timer(|| solution.q1(&data));

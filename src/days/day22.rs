@@ -1,68 +1,79 @@
-use std::{ops::RangeInclusive, str::FromStr};
+use std::{ops::Range, str::FromStr};
 
 use crate::{unwrap_or_continue, utils::TryCollectArray, Solution};
 
 pub struct Day22;
 
-/// A 3D grid. The `SUM` generic parameter is a workaround until
-/// `generic_const_exprs` is stable. It must be set to `X * Y * Z` like so:
-/// `Grid3d<_, X, Y, Z, { X * Y * Z }>`
-struct Grid3d<T, const X: usize, const Y: usize, const Z: usize, const SUM: usize> {
-    data: [T; SUM],
-}
-
-/// A wrapper around an axis index, assuring that the value is below the specified bound.
-#[derive(Clone, Copy)]
-struct AxisIdx<const SIZE: usize>(usize);
-
-impl<const SIZE: usize> AxisIdx<SIZE> {
-    /// Verify that the value is between bounds and create the index.
-    fn new(v: usize) -> Option<Self> {
-        if v < SIZE {
-            Some(Self(v))
-        } else {
-            None
-        }
-    }
-}
-
-impl<T, const X: usize, const Y: usize, const Z: usize, const SUM: usize> Grid3d<T, X, Y, Z, SUM> {
-    /// Create a new grid filled with the given value.
-    fn new(v: T) -> Self
-    where
-        T: Copy,
-    {
-        if X * Y * Z == SUM {
-            Self { data: [v; SUM] }
-        } else {
-            // This could nearly be a compile error, however we cannot change this function
-            // to a const fn as T requires to be Copy (#57563)
-            panic!("SUM != X * Y * Z")
-        }
-    }
-
-    /// Get an element of the grid mutably.
-    fn get_mut(&mut self, (x, y, z): (AxisIdx<X>, AxisIdx<Y>, AxisIdx<Z>)) -> &mut T {
-        let idx = z.0 * (Y * X) + y.0 * X + x.0;
-        let cell = self.data.get_mut(idx);
-
-        // SAFETY: We control with `AxisIdx` that each index is within bounds,
-        // so the computed index is always within bounds.
-        unsafe { cell.unwrap_unchecked() }
-    }
-}
-
-impl<const X: usize, const Y: usize, const Z: usize, const SUM: usize> Grid3d<bool, X, Y, Z, SUM> {
-    /// Count the number of powered on blocks.
-    fn count(&self) -> usize {
-        self.data.iter().filter(|&&b| b).count()
-    }
-}
-
+#[derive(Debug, Clone)]
 struct Cuboid {
-    x: RangeInclusive<i32>,
-    y: RangeInclusive<i32>,
-    z: RangeInclusive<i32>,
+    x: Range<i32>,
+    y: Range<i32>,
+    z: Range<i32>,
+}
+
+impl Cuboid {
+    /// Compute the intersection of two cuboids.
+    fn intersect(&self, other: &Self) -> Option<Self> {
+        fn process_axis(ax1: &Range<i32>, ax2: &Range<i32>) -> Range<i32> {
+            ax1.start.max(ax2.start)..ax1.end.min(ax2.end)
+        }
+
+        let x = process_axis(&self.x, &other.x);
+        if x.is_empty() {
+            return None;
+        }
+
+        let y = process_axis(&self.y, &other.y);
+        if y.is_empty() {
+            return None;
+        }
+
+        let z = process_axis(&self.z, &other.z);
+        if z.is_empty() {
+            return None;
+        }
+
+        Some(Self { x, y, z })
+    }
+
+    /// Remove a smaller cuboid from the cuboid, splitting it into multiple smaller parts.
+    /// The returned cuboids do not contain the removed cuboid.
+    fn remove_cuboid(mut self, cub_to_remove: &Self) -> Vec<Self> {
+        let mut res = vec![];
+
+        macro_rules! split_axis {
+            ($ax:ident) => {
+                // Split left
+                if self.$ax.start < cub_to_remove.$ax.start {
+                    res.push(Self {
+                        $ax: self.$ax.start..cub_to_remove.$ax.start,
+                        ..self.clone()
+                    });
+                }
+
+                // Split right
+                if self.$ax.end > cub_to_remove.$ax.end {
+                    res.push(Self {
+                        $ax: cub_to_remove.$ax.end..self.$ax.end,
+                        ..self.clone()
+                    })
+                }
+
+                self.$ax = cub_to_remove.$ax.clone();
+            };
+        }
+
+        split_axis!(x);
+        split_axis!(y);
+        split_axis!(z);
+
+        res
+    }
+
+    /// Return the number of cubes inside the cuboid.
+    fn size(&self) -> usize {
+        self.x.len() * self.y.len() * self.z.len()
+    }
 }
 
 impl FromStr for Cuboid {
@@ -74,9 +85,9 @@ impl FromStr for Cuboid {
             let (start, end) = s.split_once("..")?;
 
             let start = start.parse().ok()?;
-            let end = end.parse().ok()?;
+            let end = end.parse::<i32>().ok()? + 1;
 
-            Some(start..=end)
+            Some(start..end)
         };
 
         let [x, y, z] = s.split(',').try_collect_array().ok_or(())?;
@@ -89,9 +100,10 @@ impl FromStr for Cuboid {
     }
 }
 
+#[derive(Debug, Clone)]
 struct RebootStep {
     power_on: bool,
-    area: Cuboid,
+    cuboid: Cuboid,
 }
 
 impl FromStr for RebootStep {
@@ -103,7 +115,59 @@ impl FromStr for RebootStep {
         let power_on = power_on == "on";
         let area = cuboid.parse()?;
 
-        Ok(Self { power_on, area })
+        Ok(Self {
+            power_on,
+            cuboid: area,
+        })
+    }
+}
+
+#[derive(Debug)]
+struct World {
+    cuboids: Vec<Cuboid>,
+}
+
+impl World {
+    fn new() -> Self {
+        Self { cuboids: vec![] }
+    }
+
+    fn apply(&mut self, step: RebootStep, from_idx: usize) {
+        // Find the first element that intersects with the cuboid
+        let mut intersections = self.cuboids[from_idx..]
+            .iter()
+            .zip(from_idx..)
+            .flat_map(|(cub, idx)| step.cuboid.intersect(cub).map(|int| (idx, int)));
+
+        if let Some((idx, intersection)) = intersections.next() {
+            // If intersecting and powering on, simply trim the step cuboid instead of
+            // also trimming the intersected cuboid
+            if step.power_on {
+                let step_cubs = step.cuboid.remove_cuboid(&intersection);
+                for cuboid in step_cubs {
+                    self.apply(
+                        RebootStep {
+                            power_on: step.power_on,
+                            cuboid,
+                        },
+                        idx,
+                    )
+                }
+            } else {
+                // Pop the intersected cuboid
+                let int_cub = self.cuboids.swap_remove(idx);
+                let mut int_cubs = int_cub.remove_cuboid(&intersection);
+
+                // Try to re-apply the step on the rest of the cuboids
+                self.apply(step.clone(), idx);
+
+                // Re-add the non-intersected parts of the intersected cuboid
+                self.cuboids.append(&mut int_cubs);
+            }
+        } else if step.power_on {
+            // If no intersection, apply the step
+            self.cuboids.push(step.cuboid);
+        }
     }
 }
 
@@ -111,47 +175,62 @@ impl Solution for Day22 {
     /// Apply all reboot steps only on cubes between -50 and 50 (on each axis, both values included).
     /// Count the number of cubes powered on.
     fn q1(&self, data: &str) -> String {
-        const AX_RANGE: RangeInclusive<i32> = -50..=50;
-        const AX: usize = (*AX_RANGE.end() - *AX_RANGE.start()) as usize + 1;
+        const AX_RANGE: Range<i32> = -50..51;
 
-        let steps = Self::parse_data(data);
-        let mut grid: Grid3d<bool, AX, AX, AX, { AX * AX * AX }> = Grid3d::new(false);
-
-        let world_to_idx = |range: RangeInclusive<i32>| {
-            let start = *range.start().max(AX_RANGE.start());
-            let end = *range.end().min(AX_RANGE.end());
+        let range_to_bounds = |range: Range<i32>| {
+            let start = range.start.max(AX_RANGE.start);
+            let end = range.end.min(AX_RANGE.end);
 
             if start > end {
-                return None;
+                None
+            } else {
+                Some(start..end)
             }
-
-            let start = (start - *AX_RANGE.start()) as usize;
-            let end = (end - *AX_RANGE.start()) as usize;
-
-            Some((start..=end).map(|i| AxisIdx::<AX>::new(i).unwrap()))
         };
 
-        for RebootStep { power_on, area } in steps {
-            let xrange = unwrap_or_continue!(world_to_idx(area.x));
-            let yrange = unwrap_or_continue!(world_to_idx(area.y));
-            let zrange = unwrap_or_continue!(world_to_idx(area.z));
+        let steps = Self::parse_data(data);
+        let mut world = World::new();
 
-            for z in zrange {
-                for y in yrange.clone() {
-                    for x in xrange.clone() {
-                        *grid.get_mut((x, y, z)) = power_on;
-                    }
-                }
-            }
+        for RebootStep {
+            power_on,
+            cuboid: area,
+        } in steps
+        {
+            // Restrict the cuboids to the specified range
+            let x = unwrap_or_continue!(range_to_bounds(area.x));
+            let y = unwrap_or_continue!(range_to_bounds(area.y));
+            let z = unwrap_or_continue!(range_to_bounds(area.z));
+
+            let step = RebootStep {
+                power_on,
+                cuboid: Cuboid { x, y, z },
+            };
+            world.apply(step, 0);
         }
 
-        grid.count().to_string()
+        world
+            .cuboids
+            .iter()
+            .map(Cuboid::size)
+            .sum::<usize>()
+            .to_string()
     }
 
-    /// TODO
+    /// Same as q1 but without the range restriction
     fn q2(&self, data: &str) -> String {
-        let _lines = Self::parse_data(data);
-        String::new()
+        let steps = Self::parse_data(data);
+        let mut world = World::new();
+
+        for step in steps {
+            world.apply(step, 0);
+        }
+
+        world
+            .cuboids
+            .iter()
+            .map(Cuboid::size)
+            .sum::<usize>()
+            .to_string()
     }
 }
 
