@@ -20,8 +20,8 @@ impl Grid {
             .flatten()
             .find_position(|&&n| n == number)
         {
-            let y = (i / 5) as usize;
-            let x = (i % 5) as usize;
+            let y = i / 5;
+            let x = i % 5;
 
             self.drawn[y][x] = true;
             self.check_line(y) || self.check_col(x)

@@ -98,7 +98,7 @@ impl Line {
     /// Check whether the line is diagonal (45 degrees)
     fn is_diag(&self) -> bool {
         if let &Line::Any { x1, x2, y1, y2 } = self {
-            (y2 as i64 - y1 as i64).abs() as u64 == x2 - x1
+            (y2 as i64 - y1 as i64).unsigned_abs() == x2 - x1
         } else {
             false
         }

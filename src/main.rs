@@ -7,17 +7,21 @@ use std::{
 };
 
 use anyhow::Context;
-use chrono::{TimeZone, Utc};
 use clap::Parser;
 use dotenv::dotenv;
 use owo_colors::colors::*;
 use owo_colors::OwoColorize;
+use time::{Date, OffsetDateTime, PrimitiveDateTime, Time};
 
-mod days;
 mod utils;
+mod y2021;
+mod y2022;
 
 #[derive(Parser)]
 struct Opts {
+    /// The year to use, If not specified, use the current year
+    year: Option<u16>,
+
     /// The day to run. If not specified, run all days
     day: Option<u8>,
 
@@ -52,13 +56,17 @@ fn main() -> anyhow::Result<()> {
     );
     println!("{}", "~~~~~~~~~~~~~~~~~~~~~~~~~~~".fg::<Blue>());
 
-    let now = Utc::now();
+    let now = OffsetDateTime::now_utc();
     let mut total_duration = Duration::ZERO;
     for day in days {
         println!();
 
         // Build the release date of the wanted day
-        let release = Utc.ymd(args.year as _, 12, day as _).and_hms(5, 0, 0);
+        let release = PrimitiveDateTime::new(
+            Date::from_calendar_date(args.year as _, time::Month::December, day).unwrap(),
+            Time::from_hms(5, 0, 0).unwrap(),
+        )
+        .assume_utc();
 
         // If the day challenge has not been released, directly exit without trying to download/run it
         if release > now {
@@ -74,7 +82,18 @@ fn main() -> anyhow::Result<()> {
 
         let data = read_data(args.year, day, &args.data_path, args.aoc_session.as_deref())
             .expect("Could not read the data file");
-        let solution = days::DAYS[day as usize - 1];
+        let solution = match args.year {
+            2021 => y2021::DAYS,
+            2022 => y2022::DAYS,
+            _ => {
+                println!(
+                    "{}",
+                    "You cannot go into the future! (or the code has not yet been updated)"
+                        .fg::<Red>()
+                );
+                return Ok(());
+            }
+        }[day as usize - 1];
 
         let print_result = |res: &str, dur: Duration| {
             println!(
@@ -158,7 +177,7 @@ fn config_args() -> anyhow::Result<Args> {
     let aoc_session = opts.session.or_else(|| env::var("AOC_SESSION").ok());
 
     Ok(Args {
-        year: 2021,
+        year: opts.year.unwrap_or(2022),
         day: opts.day,
         data_path,
         aoc_session,
@@ -177,7 +196,7 @@ fn read_data(
     let path = data_path.as_ref().join(format!("day{}.zst", day));
     let parent = path.parent().unwrap();
 
-    std::fs::create_dir_all(&parent)
+    std::fs::create_dir_all(parent)
         .with_context(|| format!("Could not create directories '{}'", parent.display()))?;
 
     let file = if let Ok(file) = File::open(&path) {

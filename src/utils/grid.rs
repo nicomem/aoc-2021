@@ -68,22 +68,22 @@ impl<T> Grid<T> {
 
     pub fn left(&self, pos: CheckedYX) -> Option<CheckedYX> {
         let CheckedYX((y, x)) = pos;
-        (x > 0).then(|| CheckedYX((y, x - 1)))
+        (x > 0).then_some(CheckedYX((y, x - 1)))
     }
 
     pub fn right(&self, pos: CheckedYX) -> Option<CheckedYX> {
         let CheckedYX((y, x)) = pos;
-        (x + 1 < self.width).then(|| CheckedYX((y, x + 1)))
+        (x + 1 < self.width).then_some(CheckedYX((y, x + 1)))
     }
 
     pub fn top(&self, pos: CheckedYX) -> Option<CheckedYX> {
         let CheckedYX((y, x)) = pos;
-        (y > 0).then(|| CheckedYX((y - 1, x)))
+        (y > 0).then_some(CheckedYX((y - 1, x)))
     }
 
     pub fn bottom(&self, pos: CheckedYX) -> Option<CheckedYX> {
         let CheckedYX((y, x)) = pos;
-        (y + 1 < self.height).then(|| CheckedYX((y + 1, x)))
+        (y + 1 < self.height).then_some(CheckedYX((y + 1, x)))
     }
 
     /// Create an iterator over the (y, x) coordinates.

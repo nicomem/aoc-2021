@@ -33,19 +33,19 @@ impl<T> Grid<T> {
     }
 
     fn left(&self, (y, x): YX) -> Option<YX> {
-        (x > 0).then(|| (y, x - 1))
+        (x > 0).then_some((y, x - 1))
     }
 
     fn right(&self, (y, x): YX) -> Option<YX> {
-        (x + 1 < self.width).then(|| (y, x + 1))
+        (x + 1 < self.width).then_some((y, x + 1))
     }
 
     fn top(&self, (y, x): YX) -> Option<YX> {
-        (y > 0).then(|| (y - 1, x))
+        (y > 0).then_some((y - 1, x))
     }
 
     fn bottom(&self, (y, x): YX) -> Option<YX> {
-        (y + 1 < self.height).then(|| (y + 1, x))
+        (y + 1 < self.height).then_some((y + 1, x))
     }
 
     /// Create an iterator over the (y, x) coordinates.

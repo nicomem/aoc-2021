@@ -93,7 +93,7 @@ impl Day3 {
         for i in 0..Self::N_DIGITS {
             let most = inverse ^ Self::most_common_bool(values.iter().map(|arr| arr[i]));
 
-            values = values.into_iter().filter(|arr| arr[i] == most).collect();
+            values.retain(|arr| arr[i] == most);
             if values.len() == 1 {
                 return values[0];
             }
