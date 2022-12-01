@@ -11,7 +11,7 @@ pub use grid::{CheckedYX, Grid, YX};
 
 /// Build the URL to get an AOC input
 pub fn get_input_url(year: u16, day: u8) -> String {
-    format!("https://adventofcode.com/{}/day/{}/input", year, day)
+    format!("https://adventofcode.com/{year}/day/{day}/input")
 }
 
 pub trait TryCollectArray {
