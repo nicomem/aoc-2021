@@ -127,3 +127,27 @@ impl Rucksack2 {
         Item::from_bit_mask(mask1 & mask2 & mask3)
     }
 }
+
+#[cfg(test)]
+mod test {
+    const DATA: &str = "vJrwpWtwJgWrhcsFMMfFFhFp
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw";
+
+    use crate::Solution;
+
+    use super::Day3;
+
+    #[test]
+    fn q1() {
+        assert_eq!("157", Day3 {}.q1(DATA));
+    }
+
+    #[test]
+    fn q2() {
+        assert_eq!("70", Day3 {}.q2(DATA));
+    }
+}

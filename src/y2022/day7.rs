@@ -234,12 +234,12 @@ mod test {
     ";
 
     #[test]
-    fn example1() {
+    fn q1() {
         assert_eq!("95437", super::Day7 {}.q1(DATA));
     }
 
     #[test]
-    fn example2() {
+    fn q2() {
         assert_eq!("24933642", super::Day7 {}.q2(DATA));
     }
 }

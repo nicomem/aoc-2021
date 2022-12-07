@@ -37,3 +37,30 @@ fn find_start_messages(data: &[u8]) -> impl Iterator<Item = (usize, &[u8])> + '_
         .map(|(i, win)| (i + WIN_SIZE, win))
         .filter(|(_, win)| win.iter().all_unique())
 }
+
+#[cfg(test)]
+mod test {
+    use crate::Solution;
+
+    use super::Day6;
+
+    #[test]
+    fn q1() {
+        let day = Day6 {};
+        assert_eq!("7", day.q1("mjqjpqmgbljsphdztnvjfqwrcgsmlb"));
+        assert_eq!("5", day.q1("bvwbjplbgvbhsrlpgdmjqwftvncz"));
+        assert_eq!("6", day.q1("nppdvjthqldpwncqszvftbrmjlhg"));
+        assert_eq!("10", day.q1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"));
+        assert_eq!("11", day.q1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"));
+    }
+
+    #[test]
+    fn q2() {
+        let day = Day6 {};
+        assert_eq!("19", day.q2("mjqjpqmgbljsphdztnvjfqwrcgsmlb"));
+        assert_eq!("23", day.q2("bvwbjplbgvbhsrlpgdmjqwftvncz"));
+        assert_eq!("23", day.q2("nppdvjthqldpwncqszvftbrmjlhg"));
+        assert_eq!("29", day.q2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"));
+        assert_eq!("26", day.q2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"));
+    }
+}

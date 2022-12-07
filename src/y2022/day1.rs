@@ -58,9 +58,7 @@ impl FromStr for Meals {
                     s.split('\n')
                         // Trim & remove potentially empty lines
                         .map(|line| line.trim())
-                        .filter(|line| !line.is_empty())
-                        // Parse into an int
-                        .map(|line| line.parse().unwrap())
+                        .flat_map(|line| line.parse())
                         .collect::<Meal>()
                 })
                 // Do not keep potentially empty groups
@@ -73,4 +71,36 @@ impl FromStr for Meals {
 /// Compute a meal total calories count
 fn meal_calories(meal: Meal) -> u64 {
     meal.into_iter().sum::<u64>()
+}
+
+#[cfg(test)]
+mod test {
+    const DATA: &str = "1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000";
+
+    use crate::Solution;
+
+    use super::Day1;
+
+    #[test]
+    fn q1() {
+        assert_eq!("24000", Day1 {}.q1(DATA));
+    }
+
+    #[test]
+    fn q2() {
+        assert_eq!("45000", Day1 {}.q2(DATA));
+    }
 }

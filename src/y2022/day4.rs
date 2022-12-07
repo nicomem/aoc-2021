@@ -81,3 +81,27 @@ impl Pair {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    const DATA: &str = "2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8";
+
+    use crate::Solution;
+
+    use super::Day4;
+
+    #[test]
+    fn q1() {
+        assert_eq!("2", Day4 {}.q1(DATA));
+    }
+
+    #[test]
+    fn q2() {
+        assert_eq!("4", Day4 {}.q2(DATA));
+    }
+}

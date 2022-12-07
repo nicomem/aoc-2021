@@ -164,3 +164,24 @@ impl Round2 {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    const DATA: &str = "A Y
+B X
+C Z";
+
+    use crate::Solution;
+
+    use super::Day2;
+
+    #[test]
+    fn q1() {
+        assert_eq!("15", Day2 {}.q1(DATA));
+    }
+
+    #[test]
+    fn q2() {
+        assert_eq!("12", Day2 {}.q2(DATA));
+    }
+}
