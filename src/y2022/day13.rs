@@ -11,3 +11,24 @@ impl Solution for Day13 {
         todo!()
     }
 }
+
+// #[cfg(test)]
+// mod test {
+//     use crate::Solution;
+
+//     use super::Day13;
+
+//     #[test]
+//     fn q1() {
+//         let day = Day13 {};
+
+//         assert_eq!("", day.q1(""));
+//     }
+
+//     #[test]
+//     fn q2() {
+//         let day = Day13 {};
+
+//         assert_eq!("", day.q2(""));
+//     }
+// }

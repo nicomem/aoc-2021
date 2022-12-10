@@ -97,8 +97,9 @@ fn main() -> anyhow::Result<()> {
 
         let print_result = |res: &str, dur: Duration| {
             println!(
-                "{} {} {}{}{}{}",
+                "{} {}{} {}{}{}{}",
                 "R =".fg::<Cyan>(),
+                if res.contains('\n') { "\n" } else { "" }, // For multi-line results, align them all
                 res.fg::<Yellow>(),
                 "(".fg::<Blue>(),
                 dur.as_millis().fg::<Green>(),
