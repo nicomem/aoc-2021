@@ -108,17 +108,20 @@ struct Packet {
 
 impl Packet {
     fn parse(chars: &mut Peekable<impl Iterator<Item = char>>) -> Self {
-        debug_assert_eq!(Some('['), chars.next());
+        let c = chars.next();
+        debug_assert_eq!(Some('['), c);
 
         let mut packet = Self { items: vec![] };
         while let Some(c) = chars.peek() {
             match c {
                 ']' => {
-                    debug_assert_eq!(Some(']'), chars.next());
+                    let c = chars.next();
+                    debug_assert_eq!(Some(']'), c);
                     break;
                 }
                 ',' => {
-                    debug_assert_eq!(Some(','), chars.next());
+                    let c = chars.next();
+                    debug_assert_eq!(Some(','), c);
                 }
                 '[' => {
                     packet
