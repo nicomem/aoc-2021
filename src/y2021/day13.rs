@@ -150,7 +150,7 @@ impl Solution for Day13 {
 
         // The code is some ASCII art, so print it and let the human brain
         // of the person reading this comment read the letters.
-        format!("\n{}", paper)
+        format!("\n{paper}")
     }
 }
 

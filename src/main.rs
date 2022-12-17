@@ -194,7 +194,7 @@ fn read_data(
     aoc_session: Option<&str>,
 ) -> anyhow::Result<String> {
     const COMPRESSION: i32 = 21;
-    let path = data_path.as_ref().join(format!("day{}.zst", day));
+    let path = data_path.as_ref().join(format!("day{day}.zst"));
     let parent = path.parent().unwrap();
 
     std::fs::create_dir_all(parent)
@@ -238,7 +238,7 @@ fn read_data(
 fn download_input(year: u16, day: u8, aoc_session: &str) -> anyhow::Result<String> {
     let url = utils::get_input_url(year, day);
     let body = ureq::get(&url)
-        .set("Cookie", &format!("session={}", aoc_session))
+        .set("Cookie", &format!("session={aoc_session}"))
         .call()?
         .into_string()?;
 

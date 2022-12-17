@@ -54,7 +54,7 @@ impl Day3 {
                 .map(|c| match c {
                     '0' => false,
                     '1' => true,
-                    _ => panic!("Expected binary number, found '{}'", c),
+                    _ => panic!("Expected binary number, found '{c}'"),
                 })
                 .try_collect_array()
                 .expect("Could not collect binary number into bool array")
